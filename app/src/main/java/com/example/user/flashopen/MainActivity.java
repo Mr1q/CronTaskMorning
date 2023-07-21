@@ -74,8 +74,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 mHandler.removeCallbacks(runnable);
-                cb_ctl.setChecked(false);
-                Log.e("error","close 闪光灯 移除runnable");
+                Log.e("TAG_ close","close 闪光灯 移除runnable");
 
             }
         });
@@ -102,11 +101,10 @@ public class MainActivity extends AppCompatActivity {
                         if (switch2.isChecked()) {
                             unit = 60;
                         }
-                        timer.scheduleAtFixedRate(task, 0, 1000 * unit);
-//                        timer.schedule(task,  1000 * unit * countDownTimer);
+                        Log.d("TAG_LOG", unit + " unit：");
+//                        timer.scheduleAtFixedRate(task, 0, 1000 * unit);
+                        timer.schedule(task,  1000 * unit * countDownTimer);
                     }
-                    sRunnableMap.put("task",task);
-                    sHandlerMap.put("handler",handler);
                 } else {
                     countDownTimer = 0;
 
@@ -138,22 +136,23 @@ public class MainActivity extends AppCompatActivity {
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-//            switch (msg.what){
-//                case 1:
+            switch (msg.what){
+                case 1:
 //                    cb_ctl.setChecked(false);
-//                    lightSwitch(false);
-//                    break;
-//                default:
-//
-//            }
-            Log.d("TAG_LOG", msg.toString() + "-- handler另一个");
-            if (countDownTimer > 0) {
-                countDownTimer--;
-                Log.d("TAG_LOG", countDownTimer + "-- ");
-            } else {
+                    Log.d("TAG_LOG", msg.toString() + "-- handler另一个");
+                    lightSwitch(false);
+                    break;
+                default:
 
-                lightSwitch(false);
             }
+
+//            if (countDownTimer > 0) {
+//                countDownTimer--;
+//                Log.d("TAG_LOG", countDownTimer + "-- ");
+//            } else {
+//
+//                lightSwitch(false);
+//            }
         }
     };
 
@@ -226,13 +225,8 @@ public class MainActivity extends AppCompatActivity {
     Runnable runnable  = new Runnable() {
         @Override
         public void run() {
-//            if(finished){
-//                mHandler.removeCallbacks(runnable);
-//                Log.d("TAG_LOG",   "结束运行-- ");
-//                return;
-//            }
             open();
-            int t = random.nextInt(200);
+            int t = random.nextInt(180) + 50;
             Log.d("TAG_LOG", t + " -");
             try {
                 Thread.sleep(t);
@@ -240,13 +234,14 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             close();
-            t = random.nextInt(300);
+            t = random.nextInt(50) + 50;
             Log.d("TAG_LOG", t + " --");
             try {
                 Thread.sleep(t);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            System.out.println("TAG_ = " + Thread.currentThread().getId());
             Log.d("TAG_", "run: 我还在运行");
             mHandler.postDelayed(this, 100);
             //这里可以控制提示状态的执行次数

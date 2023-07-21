@@ -23,23 +23,25 @@
         android:layout_gravity="center"
         android:background="@drawable/cb_open_close"
         android:button="@null" />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="关闭闪光灯"
-        android:layout_gravity="center"
-        android:id="@+id/close_light">
-    </Button>
+
 
     <android.widget.Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2"/>
+        android:layout_weight="1"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="关闭闪光灯"
+        android:layout_gravity="bottom|right"
+        android:id="@+id/close_light">
+    </Button>
     <Switch
         android:id="@+id/switch2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
+        android:checked="true"
         android:text="开启小时制" />
     <Switch
         android:id="@+id/switch1"
@@ -51,6 +53,6 @@
     <android.widget.Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="2"/>
 
 </LinearLayout>
