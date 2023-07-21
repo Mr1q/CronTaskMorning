@@ -20,6 +20,8 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TimePicker;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private Switch switch1;
     private Switch switch2;
     private Button close_light;
+    private boolean finished;
 
     Timer timer;
     TimerTask task;
@@ -56,6 +59,9 @@ public class MainActivity extends AppCompatActivity {
 
 
         manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+
+        sRunnableMap.put("runnable",runnable);
+        sHandlerMap.put("mHandler",mHandler);
         try {
             String[] camerList = manager.getCameraIdList();
             for (String str : camerList) {
@@ -67,9 +73,9 @@ public class MainActivity extends AppCompatActivity {
         close_light.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lightSwitch(true);
                 mHandler.removeCallbacks(runnable);
-                Log.e("error","close");
+                cb_ctl.setChecked(false);
+                Log.e("error","close 闪光灯 移除runnable");
 
             }
         });
@@ -78,11 +84,11 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
                 if (isChecked) {
+                    finished = false;
                     timer = new Timer(false);
                     timePicker.setVisibility(View.INVISIBLE);
                     switch2.setVisibility(View.INVISIBLE);
                     lightSwitch(true);
-
                     countDownTimer = timePicker.getCurrentHour() * 60 + timePicker.getCurrentMinute();
                     Log.d("TAG_LOG", countDownTimer + " ");
                     if (countDownTimer > 0) {
@@ -96,8 +102,11 @@ public class MainActivity extends AppCompatActivity {
                         if (switch2.isChecked()) {
                             unit = 60;
                         }
-                        timer.schedule(task,  1000 * unit * countDownTimer);
+                        timer.scheduleAtFixedRate(task, 0, 1000 * unit);
+//                        timer.schedule(task,  1000 * unit * countDownTimer);
                     }
+                    sRunnableMap.put("task",task);
+                    sHandlerMap.put("handler",handler);
                 } else {
                     countDownTimer = 0;
 
@@ -125,25 +134,26 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
+    @SuppressWarnings("all")
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what){
-                case 1:
-                    cb_ctl.setChecked(false);
-                    lightSwitch(false);
-                    break;
-                default:
-
-            }
-//            Log.d("TAG_LOG", msg.toString() + "-- ");
-//            if (countDownTimer > 0) {
-//                countDownTimer--;
-//                Log.d("TAG_LOG", countDownTimer + "-- ");
-//            } else {
-//                cb_ctl.setChecked(false);
+//            switch (msg.what){
+//                case 1:
+//                    cb_ctl.setChecked(false);
+//                    lightSwitch(false);
+//                    break;
+//                default:
+//
 //            }
+            Log.d("TAG_LOG", msg.toString() + "-- handler另一个");
+            if (countDownTimer > 0) {
+                countDownTimer--;
+                Log.d("TAG_LOG", countDownTimer + "-- ");
+            } else {
+
+                lightSwitch(false);
+            }
         }
     };
 
@@ -155,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private void lightSwitch(final boolean lightStatus) {
         if (lightStatus) { // 关闭手电筒
-
             close();
         } else { // 打开手电筒 间隔一毫秒启动闪光灯
             mHandler.postDelayed(runnable,100);
@@ -211,13 +220,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     final Handler mHandler  = new Handler();
-
+    static Map<String,Handler> sHandlerMap=new HashMap<>();
+    static Map<String,Runnable> sRunnableMap=new HashMap<>();
     final Random random = new Random();
     Runnable runnable  = new Runnable() {
         @Override
         public void run() {
+//            if(finished){
+//                mHandler.removeCallbacks(runnable);
+//                Log.d("TAG_LOG",   "结束运行-- ");
+//                return;
+//            }
             open();
-            int t = random.nextInt(400);
+            int t = random.nextInt(200);
             Log.d("TAG_LOG", t + " -");
             try {
                 Thread.sleep(t);
@@ -232,6 +247,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            Log.d("TAG_", "run: 我还在运行");
             mHandler.postDelayed(this, 100);
             //这里可以控制提示状态的执行次数
         }
