@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.util.HashMap;
@@ -37,8 +38,9 @@ public class MainActivity extends AppCompatActivity {
     private Switch switch1;
     private Switch switch2;
     private Button close_light;
+    private TextView time_msg;
     private boolean finished;
-
+    private long leftTime = 3600;//一分钟
     Timer timer;
     TimerTask task;
 
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         switch1 = findViewById(R.id.switch1);
         switch2 = findViewById(R.id.switch2);
         close_light = findViewById(R.id.close_light);
+        time_msg = findViewById(R.id.time_msg);
 
         timePicker.setIs24HourView(true);
         timePicker.setCurrentHour(0);
@@ -59,9 +62,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-
-        sRunnableMap.put("runnable",runnable);
-        sHandlerMap.put("mHandler",mHandler);
         try {
             String[] camerList = manager.getCameraIdList();
             for (String str : camerList) {
@@ -103,7 +103,9 @@ public class MainActivity extends AppCompatActivity {
                         }
                         Log.d("TAG_LOG", unit + " unit：");
 //                        timer.scheduleAtFixedRate(task, 0, 1000 * unit);
-                        timer.schedule(task,  1000 * unit * countDownTimer);
+                        leftTime = unit * countDownTimer;
+                        timer.schedule(task,  1000 * unit * countDownTimer );
+                        handler.postDelayed(update_thread,1000);
                     }
                 } else {
                     countDownTimer = 0;
@@ -165,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
     private void lightSwitch(final boolean lightStatus) {
         if (lightStatus) { // 关闭手电筒
             close();
-        } else { // 打开手电筒 间隔一毫秒启动闪光灯
+        } else { // 打开手电筒 间隔一秒启动闪光灯
             mHandler.postDelayed(runnable,100);
         }
     }
@@ -219,8 +221,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     final Handler mHandler  = new Handler();
-    static Map<String,Handler> sHandlerMap=new HashMap<>();
-    static Map<String,Runnable> sRunnableMap=new HashMap<>();
     final Random random = new Random();
     Runnable runnable  = new Runnable() {
         @Override
@@ -244,7 +244,56 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("TAG_ = " + Thread.currentThread().getId());
             Log.d("TAG_", "run: 我还在运行");
             mHandler.postDelayed(this, 100);
-            //这里可以控制提示状态的执行次数
         }
     };
+    final Handler handlerStop = new Handler() {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 1:
+                    leftTime = 0;
+                    handler.removeCallbacks(update_thread);
+                    break;
+            }
+            super.handleMessage(msg);
+        }
+
+    };
+    Runnable update_thread = new Runnable() {
+        @Override
+        public void run() {
+            leftTime--;
+            Log.d("TAG_ leftTime=",""+leftTime);
+            if (leftTime > 0) {
+                //倒计时效果展示
+                String formatLongToTimeStr = formatLongToTimeStr(leftTime);
+                time_msg.setText(formatLongToTimeStr);
+                //每一秒执行一次
+                handler.postDelayed(this, 1000);
+            } else {//倒计时结束
+                //处理业务流程
+
+                //发送消息，结束倒计时
+                Message message = new Message();
+                message.what = 1;
+                handlerStop.sendMessage(message);
+            }
+        }
+    };
+    public String formatLongToTimeStr(Long l) {
+        int hour = 0;
+        int minute = 0;
+        int second = 0;
+        second = l.intValue() ;
+        if (second > 60) {
+            minute = second / 60;   //取整
+            second = second % 60;   //取余
+        }
+        if (minute > 60) {
+            hour = minute / 60;
+            minute = minute % 60;
+        }
+        String strtime = "剩余："+hour+"小时"+minute+"分"+second+"秒";
+        return strtime;
+    }
+
 }
