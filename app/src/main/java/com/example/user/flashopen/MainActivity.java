@@ -1,15 +1,21 @@
 package com.example.user.flashopen;
 
+import android.app.AlarmManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -39,15 +45,23 @@ public class MainActivity extends AppCompatActivity {
     private Switch switch2;
     private Button close_light;
     private TextView time_msg;
-    private boolean finished;
     private long leftTime = 3600;//一分钟
     Timer timer;
     TimerTask task;
 
     @Override
+    @SuppressWarnings("all")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+//        requestIgnoreBatteryOptimizations(this);
+        Lock lock   = new Lock();
+        if(lock.lock(this,1000*60*60*10)){
+            Log.e("error","加锁成功");
+        }
+
+//        AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
+
 
         cb_ctl = findViewById(R.id.cb_ctl);
         timePicker = findViewById(R.id.timePicker);
@@ -81,9 +95,7 @@ public class MainActivity extends AppCompatActivity {
         cb_ctl.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
                 if (isChecked) {
-                    finished = false;
                     timer = new Timer(false);
                     timePicker.setVisibility(View.INVISIBLE);
                     switch2.setVisibility(View.INVISIBLE);
@@ -105,7 +117,9 @@ public class MainActivity extends AppCompatActivity {
 //                        timer.scheduleAtFixedRate(task, 0, 1000 * unit);
                         leftTime = unit * countDownTimer;
                         timer.schedule(task,  1000 * unit * countDownTimer );
+//                        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP ,System.currentTimeMillis(),5*1000, task);
                         handler.postDelayed(update_thread,1000);
+
                     }
                 } else {
                     countDownTimer = 0;
@@ -135,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
     @SuppressWarnings("all")
-    Handler handler = new Handler() {
+    Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what){
@@ -220,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
     }
-    final Handler mHandler  = new Handler();
+    final Handler mHandler  = new Handler(Looper.getMainLooper());
     final Random random = new Random();
     Runnable runnable  = new Runnable() {
         @Override
@@ -246,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
             mHandler.postDelayed(this, 100);
         }
     };
-    final Handler handlerStop = new Handler() {
+    final Handler handlerStop = new Handler(Looper.getMainLooper()) {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case 1:
@@ -296,4 +310,35 @@ public class MainActivity extends AppCompatActivity {
         return strtime;
     }
 
+    /**
+     * 判断我们的应用是否在白名单中
+     *
+     * @param context
+     * @return
+     */
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static boolean isIgnoringBatteryOptimizations(Context context) {
+        boolean isIgnoring = false;
+        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (powerManager != null) {
+            isIgnoring = powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
+        }
+        return isIgnoring;
+    }
+
+    /**
+     * 申请加入白名单
+     *
+     * @param context
+     */
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static void requestIgnoreBatteryOptimizations(Context context) {
+        try {
+            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            intent.setData(Uri.parse("package:" + context.getPackageName()));
+            context.startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
