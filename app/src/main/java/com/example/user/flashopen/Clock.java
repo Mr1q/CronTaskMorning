@@ -1,6 +1,5 @@
 package com.example.user.flashopen;
 
-import android.app.AlarmManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.FeatureInfo;
@@ -27,13 +26,11 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity {
+public class Clock extends AppCompatActivity {
 
 
     private CameraManager manager;// 声明CameraManager对象
@@ -51,20 +48,13 @@ public class MainActivity extends AppCompatActivity {
     TimerTask task;
     TimerTask task_open;
     TimerTask task_close;
-    Lock lock   = new Lock();
     @Override
     @SuppressWarnings("all")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-//        requestIgnoreBatteryOptimizations(this);
+        setContentView(R.layout.activity_clock);
 
-        if(lock.lock(this,1000*60*60*10)){
-            Log.e("TAG_","加锁成功");
-        }
-        final Intent i = new Intent(this, ClockService.class);
 
-//        AlarmManager am = (AlarmManager)getSystemService(ALARM_SERVICE);
 
 
         cb_ctl = findViewById(R.id.cb_ctl);
@@ -118,22 +108,20 @@ public class MainActivity extends AppCompatActivity {
                     countDownTimer = timePicker.getCurrentHour() * 60 + timePicker.getCurrentMinute();
                     Log.d("TAG_LOG", countDownTimer + " ");
                     if (countDownTimer > 0) {
-//                        task = new TimerTask() {
-//                            @Override
-//                            public void run() {
-//                                handler.sendEmptyMessage(1);
-//                            }
-//                        };
+                        task = new TimerTask() {
+                            @Override
+                            public void run() {
+                                handler.sendEmptyMessage(1);
+                            }
+                        };
                         int unit = 1;
                         if (switch2.isChecked()) {
                             unit = 60;
                         }
                         Log.d("TAG_LOG", unit + " unit：");
 //                        timer.scheduleAtFixedRate(task, 0, 1000 * unit);
-                        leftTime = 1000 * unit * countDownTimer;
-                        i.putExtra("delay_time",leftTime);
-                        startService(i);
-//                        timer.schedule(task,  1000 * unit * countDownTimer );
+                        leftTime = unit * countDownTimer;
+                        timer.schedule(task,  1000 * unit * countDownTimer );
 //                        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP ,System.currentTimeMillis(),5*1000, task);
 //                        handler.postDelayed(update_thread,1000);
                     }
@@ -156,11 +144,13 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     if (switch1.isChecked()) {
-                        MainActivity.this.finish();
+                        Clock.this.finish();
                     }
                 }
             }
         });
+        mHandler.postDelayed(runnable,100);
+
 
 
     }

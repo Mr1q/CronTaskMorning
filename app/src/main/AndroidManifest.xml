@@ -23,6 +23,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".Clock">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".ClockService"
+            android:enabled="true"
+            android:exported="true"/>
+        <receiver android:name=".ClockReceive"/>
     </application>
 
 </manifest>
